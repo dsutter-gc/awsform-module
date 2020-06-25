@@ -1,0 +1,5 @@
+name: AWSForm
+description: 'Does stuff with Webforms and AWS API'
+package: ISED Custom
+type: module
+core: 8.x

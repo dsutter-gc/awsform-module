@@ -1,0 +1,6 @@
+{
+    "name": "dsutter-gc/awsform",
+    "description": "AWSForm Module",
+    "type": "drupal-module",
+    "license": "GPL-2.0+"
+}
