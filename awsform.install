@@ -1,6 +1,6 @@
 <?php
 
-function awsform_update_8005() {
+function awsform_update_8006() {
   $handler_manager = \Drupal::service('plugin.manager.webform.handler');
   $webformStorage = \Drupal::entityTypeManager()->getStorage('webform');
  

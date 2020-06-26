@@ -31,7 +31,7 @@ class ExampleFormHandler extends WebformHandlerBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state, WebformSubmissionInterface $webform_submission) {
-  
+
     $data = $webform_submission->getData();
     $name = $data['name'];
     $fid = $data['image_rekognition'];
@@ -48,10 +48,15 @@ class ExampleFormHandler extends WebformHandlerBase {
     */
     $contents = file_get_contents($path);
 
+    $conf = \Drupal::config('awsform.settings');
+    $aws_access_key_id = $conf->get('aws_access_key_id');
+    $aws_secret_access_key = $conf->get('aws_secret_access_key');
+    $aws_session_token = $conf->get('aws_session_token');
+
     // Export aws credentials
-    putenv("AWS_ACCESS_KEY_ID=xxx");
-    putenv("AWS_SECRET_ACCESS_KEY=xxx");
-    putenv("AWS_SESSION_TOKEN=xxx");
+    putenv("AWS_ACCESS_KEY_ID=$aws_access_key_id");
+    putenv("AWS_SECRET_ACCESS_KEY=$aws_secret_access_key");
+    putenv("AWS_SESSION_TOKEN=$aws_session_token");
 
 
     $s3 = new S3Client([
@@ -60,7 +65,7 @@ class ExampleFormHandler extends WebformHandlerBase {
     ]);
 
     $bucket = 'drupal-rekognition';
-    
+
     try {
       // Upload the submitted image to S3 bucket
       $result = $s3->putObject([
@@ -82,6 +87,5 @@ class ExampleFormHandler extends WebformHandlerBase {
         fclose($fp);
       }
     }
-    
   }
 }
