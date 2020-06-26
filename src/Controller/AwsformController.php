@@ -16,6 +16,7 @@ class AwsformController extends ControllerBase {
     $image = 'olive.jpg';
 
     // Export aws credentials
+ 
     putenv("AWS_ACCESS_KEY_ID=xxx");
     putenv("AWS_SECRET_ACCESS_KEY=xxx");
     putenv("AWS_SESSION_TOKEN=xxx");

@@ -6,7 +6,10 @@ use Drupal\Core\Serialization\Yaml;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
-
+use Aws\S3\S3Client;
+use Aws\S3\Exception\S3Exception;
+use Drupal\file\Entity\File;
+use Drupal\node\Entity\Node;
 //use Guzzle\Http\Client;
 //use Guzzle\Http\Exception\RequestException;
 
@@ -28,9 +31,57 @@ class ExampleFormHandler extends WebformHandlerBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state, WebformSubmissionInterface $webform_submission) {
-    if ($fp = fopen('/tmp/webform', 'a')) {
-      fwrite($fp, "name=" . print_r($webform_submission->getData('name'), true));
-      fclose($fp);
+  
+    $data = $webform_submission->getData();
+    $name = $data['name'];
+    $fid = $data['image_rekognition'];
+
+    $image = \Drupal::entityManager()->getStorage('file')->load($fid);
+    $fn = $image->getFilename();
+    $uri = $image->getFileUri();
+    $path = \Drupal::service('file_system')->realpath($uri);
+
+    /* Read image bytes
+    $file = fopen($path, "rb");
+    $contents = fread($file, filesize($path));
+    fclose($file);
+    */
+    $contents = file_get_contents($path);
+
+    // Export aws credentials
+    putenv("AWS_ACCESS_KEY_ID=xxx");
+    putenv("AWS_SECRET_ACCESS_KEY=xxx");
+    putenv("AWS_SESSION_TOKEN=xxx");
+
+
+    $s3 = new S3Client([
+      'version' => 'latest',
+      'region'  => 'us-east-1'
+    ]);
+
+    $bucket = 'drupal-rekognition';
+    
+    try {
+      // Upload the submitted image to S3 bucket
+      $result = $s3->putObject([
+        'Bucket' => $bucket,
+        'Key'    => $fn,
+        'Body'   => $contents,
+        'ACL'    => 'private'
+      ]);
+
+      // Print the URL to the object in /tmp/webform
+      if ($fp = fopen('/tmp/webform', 'a')) {
+        fwrite($fp, $result['ObjectURL']);
+        fclose($fp);
+      }
+    } catch (S3Exception $e) {
+       // Print error message in /tmp/webform_error
+       if ($fp = fopen('/tmp/webform_error', 'a')) {
+        fwrite($fp, $e->getMessage());
+        fclose($fp);
+      }
     }
+    
   }
 }
