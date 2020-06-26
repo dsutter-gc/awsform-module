@@ -1,14 +1,14 @@
 <?php
-namespace Drupal\my_custom_form_handler\Plugin\WebformHandler;
+namespace Drupal\awsform\Plugin\WebformHandler;
 
-use Drupal\Core\Session\Account\Interface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Serialization\Yaml;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
 
-use Guzzle\Http\Client;
-use Guzzle\Http\Exception\RequestException;
+//use Guzzle\Http\Client;
+//use Guzzle\Http\Exception\RequestException;
 
 /**
  * Form submission handler.
@@ -28,8 +28,8 @@ class ExampleFormHandler extends WebformHandlerBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state, WebformSubmissionInterface $webform_submission) {
-    if ($fp = fopen('/tmp/webf', 'a')) {
-      fwrite($fp, "name=" . $webform_submission->getData('name'));
+    if ($fp = fopen('/tmp/webform', 'a')) {
+      fwrite($fp, "name=" . print_r($webform_submission->getData('name'), true));
       fclose($fp);
     }
   }

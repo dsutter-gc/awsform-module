@@ -1,0 +1,24 @@
+<?php
+
+function awsform_update_8005() {
+  $handler_manager = \Drupal::service('plugin.manager.webform.handler');
+  $webformStorage = \Drupal::entityTypeManager()->getStorage('webform');
+ 
+  $handlerConfiguration = [
+    'id' => 'example_form_handler',
+    'label' => 'Example form handler',
+    'handler_id' => 'example_form_handler',
+    'status' => 1,
+    'weight' => 1,
+    'settings' => [],
+  ];
+ 
+  foreach ($webformStorage->loadMultiple() as $webform) {
+//    file_put_contents('/tmp/updatedb', "webform id is " . $webform->id() . "\n", FILE_APPEND);
+    if ($webform->id() == 'image_recognition') {
+      $handler = $handler_manager->createInstance('example_form_handler', $handlerConfiguration);
+      $webform->setOriginalId($webform->id());
+      $webform->addWebformHandler($handler);
+    }
+  }
+}
