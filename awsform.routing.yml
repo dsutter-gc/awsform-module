@@ -1,0 +1,7 @@
+awsform.apitest:
+  path: '/admin/apitest'
+  defaults:
+    _title: 'AWSForm API Test'
+    _controller: '\Drupal\awsform\Controller\AwsformController::apitest'
+  requirements:
+    _permission: 'access content'
