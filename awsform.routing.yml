@@ -12,3 +12,10 @@ awsform.settings:
     _form: '\Drupal\awsform\Form\AwsformSettings'
   requirements:
     _permission: 'access content'
+awsform.webform:
+  path: '/admin/awsform/webform'
+  defaults:
+    _title: 'AWSForm Webform'
+    _controller: '\Drupal\awsform\Controller\AwsformController::webform'
+  requirements:
+    _permission: 'access content'
