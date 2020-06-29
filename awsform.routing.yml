@@ -1,10 +1,3 @@
-awsform.apitest:
-  path: '/admin/apitest'
-  defaults:
-    _title: 'AWSForm API Test'
-    _controller: '\Drupal\awsform\Controller\AwsformController::apitest'
-  requirements:
-    _permission: 'access content'
 awsform.settings:
   path: '/admin/awsform/settings'
   defaults:
@@ -12,10 +5,4 @@ awsform.settings:
     _form: '\Drupal\awsform\Form\AwsformSettings'
   requirements:
     _permission: 'access content'
-awsform.webform:
-  path: '/admin/awsform/webform'
-  defaults:
-    _title: 'AWSForm Webform'
-    _controller: '\Drupal\awsform\Controller\AwsformController::webform'
-  requirements:
-    _permission: 'access content'
+

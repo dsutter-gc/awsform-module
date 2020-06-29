@@ -6,10 +6,13 @@ use Drupal\Core\Serialization\Yaml;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
+use Drupal\webform\Entity\Webform;
+use Drupal\webform\Entity\WebformSubmission;
+use Drupal\webform\WebformSubmissionForm;
 use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
-use Drupal\file\Entity\File;
-use Drupal\node\Entity\Node;
+use Drupal\awsform\Controller\AwsformController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 //use Guzzle\Http\Client;
 //use Guzzle\Http\Exception\RequestException;
 
@@ -25,7 +28,7 @@ use Drupal\node\Entity\Node;
  *   results = Drupal\webform\Plugin\WebformHandlerInterface::RESULTS_PROCESSED,
  * )
  */
-class ExampleFormHandler extends WebformHandlerBase {
+class RekognitionFormHandler extends WebformHandlerBase {
 
   /**
    * {@inheritdoc}
@@ -36,16 +39,12 @@ class ExampleFormHandler extends WebformHandlerBase {
     $name = $data['name'];
     $fid = $data['image_rekognition'];
 
+    // Get submitted image from file id
     $image = \Drupal::entityManager()->getStorage('file')->load($fid);
     $fn = $image->getFilename();
     $uri = $image->getFileUri();
     $path = \Drupal::service('file_system')->realpath($uri);
 
-    /* Read image bytes
-    $file = fopen($path, "rb");
-    $contents = fread($file, filesize($path));
-    fclose($file);
-    */
     $contents = file_get_contents($path);
 
     $conf = \Drupal::config('awsform.settings');
@@ -58,18 +57,15 @@ class ExampleFormHandler extends WebformHandlerBase {
     putenv("AWS_SECRET_ACCESS_KEY=$aws_secret_access_key");
     putenv("AWS_SESSION_TOKEN=$aws_session_token");
 
-
     $s3 = new S3Client([
       'version' => 'latest',
       'region'  => 'us-east-1'
     ]);
 
-    $bucket = 'drupal-rekognition';
-
     try {
       // Upload the submitted image to S3 bucket
-      $result = $s3->putObject([
-        'Bucket' => $bucket,
+      $upload = $s3->putObject([
+        'Bucket' => 'drupal-rekognition',
         'Key'    => $fn,
         'Body'   => $contents,
         'ACL'    => 'private'
@@ -77,7 +73,7 @@ class ExampleFormHandler extends WebformHandlerBase {
 
       // Print the URL to the object in /tmp/webform
       if ($fp = fopen('/tmp/webform', 'a')) {
-        fwrite($fp, $result['ObjectURL']);
+        fwrite($fp, $upload['ObjectURL']);
         fclose($fp);
       }
     } catch (S3Exception $e) {
@@ -87,5 +83,33 @@ class ExampleFormHandler extends WebformHandlerBase {
         fclose($fp);
       }
     }
+    $rekognition = new \Drupal\awsform\Controller\AwsformController;
+    
+    // Detect labels from submitted image
+    $results = $rekognition->apitest($fn);
+
+    // Get webform submission ID
+    $source = $webform_submission->getSourceEntity();
+    $sid = $source->id();
+
+    // Load webform submission object
+    $submission = WebformSubmission::load($sid);
+
+    // Modify submission values
+    $submission->setElementData('results', $results);
+
+    // Validate submission.
+    $errors = WebformSubmissionForm::validateWebformSubmission($submission);
+
+    // Check there are no validation errors.
+    if (!empty($errors)) {
+      print_r($errors);
+    }
+    else {
+      // Submit values and get submission ID.
+      $submission = WebformSubmissionForm::submitWebformSubmission($submission);
+     // print $webform_submission->id();
+    }
+
   }
 }
