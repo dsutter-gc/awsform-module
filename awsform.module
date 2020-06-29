@@ -85,7 +85,7 @@ function awsform_webform_submission_insert(WebformSubmission $webform) {
   }
 
   // Modify submission 'results' value
-  $webform->setElementData('results', $results);
+  $webform->setElementData('results', ['value' => $results, 'format' => 'full_html']);
 
   // Validate submission.
   $errors = WebformSubmissionForm::validateWebformSubmission($webform);
@@ -126,7 +126,7 @@ function awsform_detectLabels($filename) {
   for ($n=0; $n <sizeof($result['Labels']); $n++) {
     $content .= '<tr>';
     $content .= '<td>' . $result['Labels'][$n]['Name'] . '</td>';
-    $content .= '<td>' . $result['Labels'][$n]['Confidence'] . '</td>';
+    $content .= '<td>' . round($result['Labels'][$n]['Confidence']) . '%</td>';
     $content .= '<tr>';
   }
   $content .= '</table>';
