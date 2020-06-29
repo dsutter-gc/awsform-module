@@ -1,6 +1,8 @@
 <?php
 
 use Drupal\webform\Entity\WebformSubmission;
+use Drupal\webform\WebformSubmissionForm;
+use Drupal\awsform\Controller\AwsformController;
 
 function awsform_theme($existing, $type, $theme, $path) {
   return [
@@ -14,8 +16,62 @@ function awsform_theme($existing, $type, $theme, $path) {
 }
 
 function awsform_webform_submission_insert(WebformSubmission $webform) {
+  
   $data = $webform->getData();
-  $name = $data['name'];
+
+  // Get filename of submitted image
+  $fid = $data['image_rekognition'];
+  $image = \Drupal::entityManager()->getStorage('file')->load($fid);
+  $fn = $image->getFilename();
+
+  $conf = \Drupal::config('awsform.settings');
+  $aws_access_key_id = $conf->get('aws_access_key_id');
+  $aws_secret_access_key = $conf->get('aws_secret_access_key');
+  $aws_session_token = $conf->get('aws_session_token');
+
+  // Export aws credentials
+  putenv("AWS_ACCESS_KEY_ID=$aws_access_key_id");
+  putenv("AWS_SECRET_ACCESS_KEY=$aws_secret_access_key");
+  putenv("AWS_SESSION_TOKEN=$aws_session_token");
+
+  $rekognition = new \Drupal\awsform\Controller\AwsformController;
+
+  switch ($data['rekognition_function']) {
+  case 'DetectLabels':
+    // Detect labels from submitted image
+    $results = $rekognition->detectLabels($fn);
+    break;
+
+  case 'DetectFaces':
+    break;
+
+
+
+  case 'DetectText':
+    break;
+
+
+
+  case 'RecognizeCelebrities ':
+    break;
+  }
+
+
+  // Modify submission 'results' value
+  $webform->setElementData('results', $results);
+
+  // Validate submission.
+  $errors = WebformSubmissionForm::validateWebformSubmission($webform);
+
+  // Check there are no validation errors.
+  if (!empty($errors)) {
+    print_r($errors);
+  }
+  else {
+    // Submit values and get submission ID.
+    $webform = WebformSubmissionForm::submitWebformSubmission($webform);
+    // print $webform->id();
+  }
 
   drupal_set_message('Webform was updated! ID=' . $webform->id() . " name=$name");
 }

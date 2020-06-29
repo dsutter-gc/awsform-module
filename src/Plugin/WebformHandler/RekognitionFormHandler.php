@@ -6,13 +6,9 @@ use Drupal\Core\Serialization\Yaml;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
-use Drupal\webform\Entity\Webform;
-use Drupal\webform\Entity\WebformSubmission;
-use Drupal\webform\WebformSubmissionForm;
 use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
-use Drupal\awsform\Controller\AwsformController;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+
 //use Guzzle\Http\Client;
 //use Guzzle\Http\Exception\RequestException;
 
@@ -36,7 +32,6 @@ class RekognitionFormHandler extends WebformHandlerBase {
   public function submitForm(array &$form, FormStateInterface $form_state, WebformSubmissionInterface $webform_submission) {
 
     $data = $webform_submission->getData();
-    $name = $data['name'];
     $fid = $data['image_rekognition'];
 
     // Get submitted image from file id
@@ -83,33 +78,5 @@ class RekognitionFormHandler extends WebformHandlerBase {
         fclose($fp);
       }
     }
-    $rekognition = new \Drupal\awsform\Controller\AwsformController;
-    
-    // Detect labels from submitted image
-    $results = $rekognition->apitest($fn);
-
-    // Get webform submission ID
-    $source = $webform_submission->getSourceEntity();
-    $sid = $source->id();
-
-    // Load webform submission object
-    $submission = WebformSubmission::load($sid);
-
-    // Modify submission values
-    $submission->setElementData('results', $results);
-
-    // Validate submission.
-    $errors = WebformSubmissionForm::validateWebformSubmission($submission);
-
-    // Check there are no validation errors.
-    if (!empty($errors)) {
-      print_r($errors);
-    }
-    else {
-      // Submit values and get submission ID.
-      $submission = WebformSubmissionForm::submitWebformSubmission($submission);
-     // print $webform_submission->id();
-    }
-
   }
 }

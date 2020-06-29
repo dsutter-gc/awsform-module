@@ -7,12 +7,10 @@ use Drupal\Core\Render\HtmlResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Aws\Rekognition\RekognitionClient;
-use Drupal\webform\Entity\Webform;
-use Drupal\webform\Entity\WebformSubmission;
-use Drupal\webform\WebformSubmissionForm;
+
 
 class AwsformController extends ControllerBase {
-  function apitest($filename) {
+  function detectLabels($filename) {
     $module_path = drupal_get_path('module', 'awsform');
 
     $rekognition = new RekognitionClient([
