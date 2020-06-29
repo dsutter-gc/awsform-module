@@ -27,8 +27,14 @@ class AwsformSettings extends ConfigFormBase {
     foreach ($credentials as $cred) {
       $cred = str_replace('export ', '', $cred);
       $setting = explode('=', $cred, 2);
-      $len = strlen($setting[1]);
-      $settings[strtolower($setting[0])] = substr($setting[1], 1, $len-2);
+      if (isset($setting[1])) {
+        $len = strlen($setting[1]);
+        $settings[strtolower($setting[0])] = substr($setting[1], 1, $len-2);
+      }
+      else {
+        drupal_set_message('Credentials did not get picked up.', 'error');
+        return;
+      }
     }
 
     if ($fp = fopen("/tmp/settings", "w")) {

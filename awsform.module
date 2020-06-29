@@ -1,5 +1,7 @@
 <?php
 
+use Drupal\webform\Entity\WebformSubmission;
+
 function awsform_theme($existing, $type, $theme, $path) {
   return [
     'awsform' => [
@@ -9,4 +11,11 @@ function awsform_theme($existing, $type, $theme, $path) {
       ]
     ]
   ];
+}
+
+function awsform_webform_submission_insert(WebformSubmission $webform) {
+  $data = $webform->getData();
+  $name = $data['name'];
+
+  drupal_set_message('Webform was updated! ID=' . $webform->id() . " name=$name");
 }
