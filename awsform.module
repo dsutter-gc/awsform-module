@@ -3,6 +3,8 @@
 use Drupal\webform\Entity\WebformSubmission;
 use Drupal\webform\WebformSubmissionForm;
 use Drupal\awsform\Controller\AwsformController;
+use Aws\S3\S3Client;
+use Aws\S3\Exception\S3Exception;
 
 function awsform_theme($existing, $type, $theme, $path) {
   return [
@@ -18,11 +20,15 @@ function awsform_theme($existing, $type, $theme, $path) {
 function awsform_webform_submission_insert(WebformSubmission $webform) {
   
   $data = $webform->getData();
-
-  // Get filename of submitted image
   $fid = $data['image_rekognition'];
+
+  // Get submitted image from file id
   $image = \Drupal::entityManager()->getStorage('file')->load($fid);
   $fn = $image->getFilename();
+  $uri = $image->getFileUri();
+  $path = \Drupal::service('file_system')->realpath($uri);
+
+  $contents = file_get_contents($path);
 
   $conf = \Drupal::config('awsform.settings');
   $aws_access_key_id = $conf->get('aws_access_key_id');
@@ -34,6 +40,33 @@ function awsform_webform_submission_insert(WebformSubmission $webform) {
   putenv("AWS_SECRET_ACCESS_KEY=$aws_secret_access_key");
   putenv("AWS_SESSION_TOKEN=$aws_session_token");
 
+  $s3 = new S3Client([
+    'version' => 'latest',
+    'region'  => 'us-east-1'
+  ]);
+
+  try {
+    // Upload the submitted image to S3 bucket
+    $upload = $s3->putObject([
+      'Bucket' => 'drupal-rekognition',
+      'Key'    => $fn,
+      'Body'   => $contents,
+      'ACL'    => 'private'
+    ]);
+
+    // Print the URL to the object in /tmp/webform
+    if ($fp = fopen('/tmp/webform', 'a')) {
+      fwrite($fp, $upload['ObjectURL']);
+      fclose($fp);
+    }
+  } catch (S3Exception $e) {
+      // Print error message in /tmp/webform_error
+      if ($fp = fopen('/tmp/webform_error', 'a')) {
+      fwrite($fp, $e->getMessage());
+      fclose($fp);
+    }
+  }
+  
   $rekognition = new \Drupal\awsform\Controller\AwsformController;
 
   switch ($data['rekognition_function']) {
@@ -73,5 +106,5 @@ function awsform_webform_submission_insert(WebformSubmission $webform) {
     // print $webform->id();
   }
 
-  drupal_set_message('Webform was updated! ID=' . $webform->id() . " name=$name");
+  drupal_set_message('Webform was updated!');
 }

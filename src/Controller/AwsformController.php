@@ -2,24 +2,28 @@
 
 namespace Drupal\awsform\Controller;
 
-use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Render\HtmlResponse;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+//use Drupal\Core\Controller\ControllerBase;
+//use Drupal\Core\Render\HtmlResponse;
+//use Symfony\Component\HttpFoundation\JsonResponse;
+//use Symfony\Component\HttpFoundation\RedirectResponse;
 use Aws\Rekognition\RekognitionClient;
 
 
-class AwsformController extends ControllerBase {
-  function detectLabels($filename) {
-    $module_path = drupal_get_path('module', 'awsform');
+class AwsformController {
 
-    $rekognition = new RekognitionClient([
-        'region' => 'us-east-1',
-        'version' => 'latest'
+  private $rekognition;
+
+  function __construct() {
+    $this->rekognition = new RekognitionClient([
+      'region' => 'us-east-1',
+      'version' => 'latest'
     ]);
+  }
+
+  function detectLabels($filename) {
 
      // Call DetectLabels
-     $result = $rekognition->DetectLabels(array(
+     $result = $this->rekognition->DetectLabels(array(
       'Image' => array(
          'S3Object' => array(
              'Bucket' => 'drupal-rekognition',
@@ -39,6 +43,10 @@ class AwsformController extends ControllerBase {
     }
 
     return $content;
+  }
+
+  function detectFaces($filename){
+
   }
   
 }
