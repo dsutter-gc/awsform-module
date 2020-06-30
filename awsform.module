@@ -122,7 +122,7 @@ function awsform_detectLabels($filename) {
     )
   );
 
-  $content = '<h2>Detected Labels</h2><br><table>';
+  $content = '<h2>Detected Labels</h2><br><table class="table">';
   $content .= '<tr><th>Label</th><th>Confidence</th>';
   for ($n=0; $n <sizeof($result['Labels']); $n++) {
     $content .= '<tr>';
