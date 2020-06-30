@@ -78,6 +78,7 @@ function awsform_webform_submission_insert(WebformSubmission $webform) {
     break;
 
   case 'DetectText':
+    $results = awsform_detectText($fn);
     break;
 
   case 'RecognizeCelebrities':
@@ -155,7 +156,7 @@ function awsform_detectFaces($filename){
 
   $content = '<h2>Detected Faces</h2><table class="table">';
   $content .= '<tr><th>Face Number</th><th>Age Range</th><th>Confidence</th><th>Smile</th><th>Eyeglasses</th><th>Beard</th>';
-  for ($n = 0;$n < sizeof($result['FaceDetails']); $n++){
+  for ($n = 0; $n < sizeof($result['FaceDetails']); $n++){
     $count = $n + 1;
     $content .= '<tr>';
     $content .= '<td>' . $count . '</td>'; 
@@ -167,6 +168,37 @@ function awsform_detectFaces($filename){
     $content .= '<td>' . $eyeglasses . '</td>';
     $beard = $result['FaceDetails'][$n]['Beard']['Value'] ? 'True' : 'False';
     $content .= '<td>' . $beard . '</td>';
+    $content .= '<tr>';
+  }
+  $content .= '</table>';
+
+  return $content;
+}
+
+function awsform_detectText($filename) {
+  $rekognition = new RekognitionClient([
+    'region' => 'us-east-1',
+    'version' => 'latest'
+  ]);
+
+  // Call detectText
+  $result = $rekognition->detectText(array(
+    'Image' => array(
+      'S3Object' => array(
+        'Bucket' => 'drupal-rekognition',
+        'Name' => $filename
+      )
+    ),
+    'Attributes' => array('ALL')
+    )
+  );
+
+  $content = '<h2>Detected Text</h2><table class="table">';
+  $content .= '<tr><th>Text</th><th>Confidence</th>';
+  for ($n = 0; $n < sizeof($result['TextDetections']); $n++) {
+    $content .= '<tr>';
+    $content .= '<td>' . $result['TextDetections'][$n]['DetectedText'] . '</td>';
+    $content .= '<td>' . round($result['TextDetections'][$n]['Confidence']) . '%</td>';
     $content .= '<tr>';
   }
   $content .= '</table>';
