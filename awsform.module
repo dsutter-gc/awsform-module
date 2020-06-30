@@ -70,11 +70,11 @@ function awsform_webform_submission_insert(WebformSubmission $webform) {
 
   switch ($data['rekognition_function']) {
   case 'DetectLabels':
-    // Detect labels from submitted image
     $results = awsform_detectLabels($fn);
     break;
 
   case 'DetectFaces':
+    $results = awsform_detectFaces($fn);
     break;
 
   case 'DetectText':
@@ -122,12 +122,51 @@ function awsform_detectLabels($filename) {
     )
   );
 
-  $content = '<h2>Detected Labels</h2><br><table class="table">';
+  $content = '<h2>Detected Labels</h2><table class="table">';
   $content .= '<tr><th>Label</th><th>Confidence</th>';
-  for ($n=0; $n <sizeof($result['Labels']); $n++) {
+  for ($n = 0; $n <sizeof($result['Labels']); $n++) {
     $content .= '<tr>';
     $content .= '<td>' . $result['Labels'][$n]['Name'] . '</td>';
     $content .= '<td>' . round($result['Labels'][$n]['Confidence']) . '%</td>';
+    $content .= '<tr>';
+  }
+  $content .= '</table>';
+
+  return $content;
+}
+
+function awsform_detectFaces($filename){
+  $rekognition = new RekognitionClient([
+    'region' => 'us-east-1',
+    'version' => 'latest'
+  ]);
+
+  // Call detectFaces
+  $result = $rekognition->detectFaces(array(
+    'Image' => array(
+      'S3Object' => array(
+        'Bucket' => 'drupal-rekognition',
+        'Name' => $filename
+      )
+    ),
+    'Attributes' => array('ALL')
+    )
+  );
+
+  $content = '<h2>Detected Faces</h2><table>';
+  $content .= '<tr><th>Face Number</th><th>Age Range</th><th>Confidence</th><th>Smile</th><th>Eyeglasses</th><th>Beard</th>';
+  for ($n = 0;$n < sizeof($result['FaceDetails']); $n++){
+    $count = $n + 1;
+    $content .= '<tr>';
+    $content .= '<td>' . $count . '</td>'; 
+    $content .= '<td>' . $result['FaceDetails'][$n]['AgeRange']['Low'] . ' to ' . $result['FaceDetails'][$n]['AgeRange']['High'] . '</td>';
+    $content .= '<td>' . round($result['FaceDetails'][$n]['Confidence']) . '%</td>';
+    $smile = $result['FaceDetails'][$n]['Smile']['Value'] ? 'True' : 'False';
+    $content .= '<td>' . $smile . '</td>';
+    $eyeglasses = $result['FaceDetails'][$n]['Eyeglasses']['Value'] ? 'True' : 'False';
+    $content .= '<td>' . $eyeglasses . '</td>';
+    $beard = $result['FaceDetails'][$n]['Beard']['Value'] ? 'True' : 'False';
+    $content .= '<td>' . $beard . '</td>';
     $content .= '<tr>';
   }
   $content .= '</table>';
@@ -141,7 +180,7 @@ function awsform_recognizeCelebrities($filename){
     'version' => 'latest'
   ]);
 
-  // Call RecognizeCelebrities
+  // Call recognizeCelebrities
   $result = $rekognition->recognizeCelebrities(array(
     'Image' => array(
       'S3Object' => array(
@@ -153,9 +192,9 @@ function awsform_recognizeCelebrities($filename){
     )
   );
 
-  $content = '<h2>Recognized Celebrities</h2><br><table>';
+  $content = '<h2>Recognized Celebrities</h2><table>';
   $content .= '<tr><th>Name</th><th>Confidence</th>';
-  for ($n=0; $n <sizeof($result['CelebrityFaces']); $n++) {
+  for ($n = 0; $n <sizeof($result['CelebrityFaces']); $n++) {
     $content .= '<tr>';
     $content .= '<td>' . $result['CelebrityFaces'][$n]['Name'] . '</td>';
     $content .= '<td>' . round($result['CelebrityFaces'][$n]['MatchConfidence']) . '%</td>';
